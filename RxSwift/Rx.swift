@@ -81,7 +81,11 @@ func decrementChecked(_ i: inout Int) throws -> Int {
             #if FATAL_SYNCHRONIZATION
                 rxFatalError(message)
             #else
-                print(message)
+                if Hooks.fatalSynchronizationError {
+                    rxFatalError(message)
+                } else {
+                    print(message)
+                }
             #endif
         }
         
@@ -139,9 +143,9 @@ public enum Hooks {
     // Should capture call stack
     public static var recordCallStackOnError: Bool = false
  
-+    // Should trigger a fatal error when a synchronization error is detected
-+    public static var fatalSynchronizationError: Bool = false
+    // Should trigger a fatal error when a synchronization error is detected
+    public static var fatalSynchronizationError: Bool = false
  
-+    // Limit of reentrancy loops to trigger a warning
-+    public static var reentrancyLimit: Int = 2
+    // Limit of reentrancy loops to trigger a warning
+    public static var reentrancyLimit: Int = 2
 }
