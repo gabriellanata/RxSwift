@@ -67,6 +67,14 @@ func decrementChecked(_ i: inout Int) throws -> Int {
 
 #if DEBUG
     import Foundation
+
+    public struct RxAnomalyDetection {
+        /// The maximum number of reentrancy loops allowed
+        public static var reentrancyLimit = 2
+        /// The maximum number of synchronization threads allowed
+        public static var synchronizationLimit = 1
+    }
+
     final class SynchronizationTracker {
         private let lock = RecursiveLock()
 
@@ -90,7 +98,7 @@ func decrementChecked(_ i: inout Int) throws -> Int {
             let pointer = Unmanaged.passUnretained(Thread.current).toOpaque()
             let count = (self.threads[pointer] ?? 0) + 1
 
-            if count > 1 {
+            if count > RxAnomalyDetection.reentrancyLimit {
                 self.synchronizationError(
                     "⚠️ Reentrancy anomaly was detected.\n" +
                     "  > Debugging: To debug this issue you can set a breakpoint in \(#file):\(#line) and observe the call stack.\n" +
@@ -106,7 +114,7 @@ func decrementChecked(_ i: inout Int) throws -> Int {
             
             self.threads[pointer] = count
 
-            if self.threads.count > 1 {
+            if self.threads.count > RxAnomalyDetection.synchronizationLimit {
                 self.synchronizationError(
                     "⚠️ Synchronization anomaly was detected.\n" +
                     "  > Debugging: To debug this issue you can set a breakpoint in \(#file):\(#line) and observe the call stack.\n" +
