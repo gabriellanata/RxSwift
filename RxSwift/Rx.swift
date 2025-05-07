@@ -81,7 +81,11 @@ func decrementChecked(_ i: inout Int) throws -> Int {
             #if FATAL_SYNCHRONIZATION
                 rxFatalError(message)
             #else
-                print(message)
+                if Hooks.fatalSynchronizationError {
+                    rxFatalError(message)
+                } else {
+                    print(message)
+                }
             #endif
         }
         
@@ -90,7 +94,7 @@ func decrementChecked(_ i: inout Int) throws -> Int {
             let pointer = Unmanaged.passUnretained(Thread.current).toOpaque()
             let count = (self.threads[pointer] ?? 0) + 1
 
-            if count > 1 {
+            if count > Hooks.reentrancyLimit {
                 self.synchronizationError(
                     "⚠️ Reentrancy anomaly was detected.\n" +
                     "  > Debugging: To debug this issue you can set a breakpoint in \(#file):\(#line) and observe the call stack.\n" +
@@ -138,5 +142,10 @@ public enum Hooks {
     
     // Should capture call stack
     public static var recordCallStackOnError: Bool = false
-
+ 
+    // Should trigger a fatal error when a synchronization error is detected
+    public static var fatalSynchronizationError: Bool = false
+ 
+    // Limit of reentrancy loops to trigger a warning
+    public static var reentrancyLimit: Int = 2
 }
